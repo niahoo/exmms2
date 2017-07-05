@@ -5,23 +5,6 @@ import sys
 import genipc
 from indenter import Indenter
 
-js_map = {
-    "int": "number",
-    "string": "string",
-    "list": "array",
-    "dictionary": "xmmsclient.Dict",
-    "binary": "xmmsclient.Bindata",
-    "collection": "xmmsclient.Collection",
-}
-
-def jstype(typ):
-    if typ in js_map:
-        typ = js_map[typ]
-    else:
-        typ = "object"
-    return typ
-
-
 def camel_case(s):
     return ''.join(x.capitalize() for x in s.split('_'))
 
@@ -66,7 +49,7 @@ def emit_method_code(object, method, name_prefix):
     for a in arguments:
         toptype = a.type[0].replace('enum-value', 'enum_value')
         if len(a.type) > 1 and a.type[1] != "unknown":
-            subtype = jstype(a.type[1])
+            subtype = a.type[1]
             Indenter.printline('{:%s, :%s, :%s},'  % (a.name, toptype, subtype))
         else:
             Indenter.printline('{:%s, :%s},'  % (a.name, toptype))
