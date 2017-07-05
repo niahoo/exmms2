@@ -15,7 +15,8 @@ defmodule Exmms2.IPC.Compiler do
 
   def create_module(defs) do
     %{functions: functions, module: module, object_id: oid} = defs
-    module_name = Module.concat([Exmms2.IPC, String.to_atom(module)])
+    module_name = Module.concat([Exmms2.IPC.Message, String.to_atom(module)])
+    IO.puts "Creating IPC Module \"#{module_name}\""
     quote do
       defmodule unquote(module_name) do
         use unquote(__MODULE__), defs: unquote(defs)
@@ -37,18 +38,29 @@ defmodule Exmms2.IPC.Compiler do
   def create_message_function(info) do
     %{doc: doc, args: args, command_id: command_id, name: name,
       object_id: object_id, signal: is_signal, payload: payload_def} = info
-    args_names = Keyword.keys(args)
+    args_names = get_args_names(args)
     args_vars =
       args_names
       |> Enum.map(&Macro.var(&1, __MODULE__))
     args_checks =
       args
-      |> Enum.map(fn({name, type}) ->
-                    arg = Macro.var(name, __MODULE__)
-                    quote do
-                      Exmms2.IPC.validate_value!(unquote(type), unquote(arg))
-                    end
-                  end)
+      |> Enum.map(fn
+          ({name, type}) ->
+            arg = Macro.var(name, __MODULE__)
+            quote do
+              Exmms2.IPC.validate_value!(unquote(arg), unquote(type))
+            end
+          ({name, :list, type}) ->
+            arg = Macro.var(name, __MODULE__)
+            quote do
+              Exmms2.IPC.validate_list!(unquote(arg), unquote(type))
+            end
+          ({name, :dictionary, type}) ->
+            arg = Macro.var(name, __MODULE__)
+            quote do
+              Exmms2.IPC.validate_dictionary!(unquote(arg), unquote(type))
+            end
+      end)
     payload =
       payload_def
       |> Enum.map(fn
@@ -82,4 +94,11 @@ defmodule Exmms2.IPC.Compiler do
     end
   end
 
+  defp get_args_names([]),
+    do: []
+  defp get_args_names([{k, _}|args]),
+    do: [k | get_args_names(args)]
+  defp get_args_names([{k, wrap, _}|args])
+    when wrap === :list or wrap === :dictionary,
+    do: [k | get_args_names(args)]
 end

@@ -5,7 +5,7 @@ defmodule Exmms2IPCTest do
 
   test "ipc parser" do
     assert IPC.protocol_version === 24
-    IPC.Main.hello!(IPC.protocol_version, "xmmsremote")
+    IPC.Message.Main.hello!(IPC.protocol_version, "xmmsremote")
     |> IO.inspect
     |> IPC.Message.encode
     |> IO.inspect

@@ -28,22 +28,22 @@ defmodule Exmms2.IPC do
     end
   end
 
-  def validate_value!(type, value) do
-    if validate_value(type, value) do
+  def validate_value!(value, type) do
+    if validate_value(value, type) do
       :ok
     else
       raise ValidationException, type: type, value: value
     end
   end
 
-  def validate_value(:int, n) do
+  def validate_value(n, :int) do
     is_integer(n) and n >= @min_int64 and n <= @max_int64
   end
 
-  def validate_value(:string, s),
+  def validate_value(s, :string),
     do: is_binary(s)
 
-  def validate_value(other, _) do
+  def validate_value(_, other) do
     Logger.warn("Unknown IPC value type #{inspect other}")
     true
   end
