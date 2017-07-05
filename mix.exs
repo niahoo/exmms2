@@ -31,7 +31,9 @@ defmodule Exmms2.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [
+      {:decompilerl, github: "niahoo/decompilerl"},
+    ]
   end
 
   defp aliases do

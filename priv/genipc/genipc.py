@@ -32,7 +32,7 @@ class TypedElement:
 
 class IpcFoo:
 	def __init__(self, xml_element):
-		self.version = 1 # FIXME
+		self.version = int(xml_element.getAttribute('version'))
 		self.objects = []
 
 		object_elements = xml_element.getElementsByTagName('object')
