@@ -13,7 +13,7 @@ def build(ipc):
     Indenter.enter('%{')
     Indenter.printline('version: %s,' % ipc.version)
     Indenter.enter('modules: [')
-    for object in ipc.objects[:1]:
+    for object in ipc.objects:
         camel_name = camel_case(object.name)
         Indenter.enter('%{')
         Indenter.printline('module: "%s",' % camel_name)

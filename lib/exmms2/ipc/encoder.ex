@@ -35,29 +35,29 @@ defmodule Exmms2.IPC.Encoder do
 
   def encode(term) do
     term
-    |> build()
+    |> serialize()
     |> :lists.flatten
     |> join_binaries
   end
 
-  def build(list) when is_list(list),
-    do: build_list(list, @value_type_none)
+  def serialize(list) when is_list(list),
+    do: serialize_list(list, @value_type_none)
 
-  def build(n) when is_integer(n),
+  def serialize(n) when is_integer(n),
     do: [@value_type_integer, int64(n)]
 
-  def build(str) when is_binary(str) do
+  def serialize(str) when is_binary(str) do
     len = byte_size(str)
     [@value_type_string, int32(len), str]
   end
 
-  def build_list(list, subtype) when is_list(list) do
+  def serialize_list(list, subtype) when is_list(list) do
     len = length(list)
     items =
       for item <- list do
-        build(item)
+        serialize(item)
       end
-    [@value_type_list, subtype, int32(len)|items]
+    [@value_type_list, subtype, int32(len) | items]
   end
 
   defp join_binaries(bins) do
