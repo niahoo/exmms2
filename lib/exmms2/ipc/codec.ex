@@ -68,31 +68,84 @@ defmodule Exmms2.IPC.Codec do
 
   def decode_reply(bin) when is_binary(bin) do
     IO.inspect bin
-    case bin do
-      <<object_id :: 32, status_code :: 32, cookie :: 32, payload_length :: 32, bin_payload :: binary >>
-      when byte_size(bin_payload) === payload_length ->
-        payload = decode_payload(bin_payload, payload_length)
-        status =
-          cond do
-            status_code == Const.ipc_command_special(:REPLY) -> :ok
-            status_code == Const.ipc_command_special(:ERROR) -> :error
-            true -> :unknown
-          end
-        reply = %Reply{
-          object_id: object_id,
-          status: status,
-          cookie: cookie,
-          payload: payload
-        }
-        {:ok, reply}
-      _otherwise ->
-        {:error, {:bad_reply, bin}}
+    with {:a, <<oid :: 32, sc :: 32, ck :: 32, pl :: 32, bp :: binary >>} <- {:a, bin},
+         object_id = oid, status_code = sc, cookie = ck, payload_length = pl,
+         bin_payload = bp,
+         {:b, ^payload_length} <- {:b, byte_size(bin_payload)},
+         {:c, << bin_payload :: binary-size(payload_length) >>} <- {:c, bin_payload},
+         {:ok, payload} <- decode(bin_payload) do
+          status =
+            cond do
+              status_code == Const.ipc_command_special(:REPLY) -> :ok
+              status_code == Const.ipc_command_special(:ERROR) -> :error
+              true -> :unknown
+            end
+          reply = %Reply{
+            object_id: object_id,
+            status: status,
+            cookie: cookie,
+            payload: payload
+          }
+          {:ok, reply}
+    else
+      {:error, err} -> {:error, err}
+      other -> {:error, {:bad_reply, other}}
     end
   end
 
-  def decode_payload(bin, len) do
-    "This iz my payload"
+  def decode(term) do
+    try do
+      {:ok, decode!(term)}
+    rescue
+      e -> {:error, e}
+    end
   end
+
+  # an ancoded term is always 1 term : either a scalar or a coll/list/dict. The
+  # unserialize/2 function accept concatenations of terms, e.g. the content of a
+  # list, but decode!/1 expect the result of unserialize/1 to be a unique term.
+
+  def decode!(term) do
+    term
+    |> unserialize([])
+    |> assemble()
+    |> case do
+        [unique] -> unique
+        other -> raise "terms to decode should be unique, binary : #{inspect term}"
+       end
+  end
+
+  def unserialize(<< @value_type_integer, int :: 64, rest :: binary >>, acc),
+    do: unserialize(rest, [int | acc])
+
+  def unserialize(<< @value_type_list, subtype :: 32, len :: 32, rest :: binary >>, acc),
+    do: unserialize(rest, [{:list, subtype, len} | acc])
+
+  def unserialize(<< @value_type_string, len :: 32, rest :: binary >>, acc) do
+    case rest do
+      << str :: binary-size(len), rest_2 :: binary >> ->
+        unserialize(rest_2, [str | acc])
+      _other ->
+        raise "unable to decode string #{inspect rest}"
+    end
+  end
+
+  def unserialize("", acc),
+    do: :lists.reverse(acc)
+  def unserialize(bin, acc) do
+    raise "unable to decode #{inspect bin}"
+  end
+
+  def assemble([{:list, _subtype, len} | pool]) do
+    rest = assemble(pool)
+    {members, rest_2} = Enum.split(rest, len)
+    len = length(members)
+    [members | rest_2]
+  end
+  def assemble([term | pool]),
+    do: [term | assemble(pool)]
+  def assemble([]),
+    do: []
 
   def to_hex(bin) when is_binary(bin) do
     hex =

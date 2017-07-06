@@ -25,4 +25,18 @@ defmodule Exmms2IPCTest do
     assert :pong = Exmms2.Conn.ping(conn)
   end
 
+  test "ipc codec" do
+    encode_decode(1)
+    encode_decode([[1, 2, 3, 4, "Hi"], "Bye"])
+  end
+
+  def encode_decode(term) do
+    comp =
+      term
+      |> Exmms2.IPC.Codec.encode
+      |> IO.inspect
+      |> Exmms2.IPC.Codec.decode!
+      |> IO.inspect
+    assert ^term = comp
+  end
 end
