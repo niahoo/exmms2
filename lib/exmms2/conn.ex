@@ -44,12 +44,11 @@ defmodule Exmms2.Conn do
       Message.Main.hello!(IPC.protocol_version, "exmms2_conn")
       |> Message.set_cookie(cookie)
       |> Message.encode
-      |> IO.inspect
     SStream.send!(sock, msg <> "\n")
     SStream.recv!(sock)
     |> Reply.decode!
     |> case do
-        %Reply{payload: client_id} when is_integer(client_id) ->
+        %Reply{status: :ok, payload: client_id} when is_integer(client_id) ->
           {:ok, client_id}
         other ->
           {:error, {:bad_hello_reply, other}}

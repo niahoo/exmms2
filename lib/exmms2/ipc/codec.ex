@@ -67,7 +67,6 @@ defmodule Exmms2.IPC.Codec do
   end
 
   def decode_reply(bin) when is_binary(bin) do
-    IO.inspect bin
     with {:a, <<oid :: 32, sc :: 32, ck :: 32, pl :: 32, bp :: binary >>} <- {:a, bin},
          object_id = oid, status_code = sc, cookie = ck, payload_length = pl,
          bin_payload = bp,
@@ -127,6 +126,16 @@ defmodule Exmms2.IPC.Codec do
         unserialize(rest_2, [str | acc])
       _other ->
         raise "unable to decode string #{inspect rest}"
+    end
+  end
+
+  def unserialize(<< @value_type_error, len :: 32, rest :: binary >>, acc) do
+    len = len - 1
+    case rest do
+      << err :: binary-size(len), 0, rest_2 :: binary >> ->
+        unserialize(rest_2, [{:error, err} | acc])
+      _other ->
+        raise "unable to decode error #{inspect rest}"
     end
   end
 

@@ -21,7 +21,6 @@ defmodule Exmms2IPCTest do
 
   test "ipc connection" do
     conn = Exmms2.connect("tcp://192.168.1.100:5555")
-    |> IO.inspect
     assert :pong = Exmms2.Conn.ping(conn)
   end
 
