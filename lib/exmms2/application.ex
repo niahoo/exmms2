@@ -11,8 +11,9 @@ defmodule Exmms2.Application do
     # Define workers and child supervisors to be supervised
     children = [
       # Starts a worker by calling: Exmms2.Worker.start_link(arg1, arg2, arg3)
-      supervisor(Registry, [:unique, Exmms2.Conn.Registry]),
-      supervisor(Exmms2.Conn.Supervisor, []),
+      supervisor(Registry, [:unique, Exmms2.Client.Registry]),
+      supervisor(Exmms2.Client.Supervisor, []),
+      worker(Exmms2.IPC.Cookie, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

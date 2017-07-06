@@ -8,18 +8,20 @@ defmodule Exmms2.IPC.Compiler do
   def ipc(),
     do: @ipc
 
-  def create_modules() do
+  def create_message_modules() do
     @ipc[:modules]
-    |> Enum.map(&create_module/1)
+    |> Enum.map(&create_message_module/1)
   end
 
-  def create_module(defs) do
+  def create_message_module(defs) do
     %{functions: functions, module: module, object_id: oid} = defs
     module_name = Module.concat([Exmms2.IPC.Message, String.to_atom(module)])
     IO.puts "Creating IPC Module \"#{module_name}\""
     quote do
       defmodule unquote(module_name) do
-        use unquote(__MODULE__), defs: unquote(defs)
+        require unquote(__MODULE__)
+        unquote(__MODULE__).create_message_functions(unquote(defs))
+
         def object_id() do
           unquote(oid)
         end
@@ -27,10 +29,11 @@ defmodule Exmms2.IPC.Compiler do
     end
   end
 
-  defmacro __using__(using) do
-    defs = Keyword.fetch!(using, :defs)
+  defmacro create_message_functions(defs) do
     %{functions: functions, module: module, object_id: oid} = defs
     IO.puts "Creating IPC messages functions for IPC object \"#{module}\" in module #{__CALLER__.module}"
+    IO.inspect defs
+
     functions
     |> Enum.map(&create_message_function/1)
   end

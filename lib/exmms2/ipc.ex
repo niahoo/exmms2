@@ -1,4 +1,4 @@
-Exmms2.IPC.Compiler.create_modules()
+Exmms2.IPC.Compiler.create_message_modules()
 |> Code.eval_quoted
 
 defmodule Exmms2.IPC do

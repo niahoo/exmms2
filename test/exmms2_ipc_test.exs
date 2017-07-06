@@ -20,8 +20,14 @@ defmodule Exmms2IPCTest do
   end
 
   test "ipc connection" do
-    conn = Exmms2.connect("tcp://192.168.1.100:5555")
-    assert :pong = Exmms2.Conn.ping(conn)
+    # conn = Exmms2.connect("tcp://192.168.1.100:5555")
+    conn =
+      System.get_env("XMMS_PATH")
+      |> Exmms2.connect("tcp://192.168.1.100:5555")
+    assert :pong = Exmms2.Client.ping(conn)
+    # status =
+      # Exmms2.Playback.status(conn)
+      # |> IO.inspect
   end
 
   test "ipc codec" do
