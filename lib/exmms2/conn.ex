@@ -1,4 +1,5 @@
 defmodule Exmms2.Conn do
+  require Logger
   use GenServer
   alias Exmms2.IPC
   alias Exmms2.IPC.Message
@@ -27,7 +28,9 @@ defmodule Exmms2.Conn do
   def init([ref, tcp_uri]) do
     {:ok, sock} = Socket.connect(tcp_uri)
     cookie = 1
+    Logger.debug("Exmms2 #{inspect ref} connecting to #{tcp_uri}")
     {:ok, client_id} = connect_hello(sock, cookie)
+    Logger.debug("#{inspect ref} Connection established, client id: #{client_id}")
     state = %S{ref: ref, sock: sock, client_id: client_id, cookie: 2}
     {:ok, state}
   end
@@ -45,8 +48,12 @@ defmodule Exmms2.Conn do
     SStream.send!(sock, msg <> "\n")
     SStream.recv!(sock)
     |> Reply.decode!
-    |> IO.inspect
-    {:ok, 1}
+    |> case do
+        %Reply{payload: client_id} when is_integer(client_id) ->
+          {:ok, client_id}
+        other ->
+          {:error, {:bad_hello_reply, other}}
+       end
   end
 
 end

@@ -27,6 +27,7 @@ defmodule Exmms2IPCTest do
 
   test "ipc codec" do
     encode_decode(1)
+    encode_decode("Hello")
     encode_decode([[1, 2, 3, 4, "Hi"], "Bye"])
   end
 
