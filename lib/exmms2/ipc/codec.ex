@@ -14,6 +14,8 @@ defmodule Exmms2.IPC.Codec do
   alias Exmms2.IPC.Const
   import Exmms2.IPC.Codec.Helper
 
+  @send_empty_payload true
+
   @value_type_none       int32(0x00)
   @value_type_error      int32(0x01)
   @value_type_integer    int32(0x02)
@@ -27,12 +29,18 @@ defmodule Exmms2.IPC.Codec do
     object_id = int32(msg.object_id)
     command_id = int32(msg.command_id)
     cookie = int32(msg.cookie)
-    payload = encode(msg.payload)
-    payload_length =
-      payload
-      |> byte_size()
-      |> int32()
-    join_binaries([object_id, command_id, cookie, payload_length, payload])
+    {bin_payload, payload_length} =
+      case msg.payload do
+        [] when not @send_empty_payload -> {"", int32(0)}
+        list ->
+          payload = encode(list)
+          plen =
+            payload
+            |> byte_size()
+            |> int32()
+          {payload, plen}
+      end
+    join_binaries([object_id, command_id, cookie, payload_length, bin_payload])
   end
 
   def encode(term) do

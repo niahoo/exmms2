@@ -2,6 +2,10 @@ defmodule Exmms2IPCTest do
   use ExUnit.Case
   doctest Exmms2.IPC
   alias Exmms2.IPC
+  alias Exmms2.IPC.Const
+
+  @test_url System.get_env("XMMS_PATH")
+  @test_url "tcp://192.168.1.100:5555"
 
   test "ipc parser" do
     assert IPC.protocol_version === 24
@@ -20,14 +24,20 @@ defmodule Exmms2IPCTest do
   end
 
   test "ipc connection" do
-    # conn = Exmms2.connect("tcp://192.168.1.100:5555")
-    conn =
-      System.get_env("XMMS_PATH")
-      |> Exmms2.connect("tcp://192.168.1.100:5555")
+    conn = Exmms2.connect(@test_url)
     assert :pong = Exmms2.Client.ping(conn)
-    # status =
-      # Exmms2.Playback.status(conn)
-      # |> IO.inspect
+    {:ok, status} =
+      Exmms2.Client.Playback.status(conn)
+    assert status in [
+      Const.playback_status(:PLAY),
+      Const.playback_status(:PAUSE),
+      Const.playback_status(:STOP),
+    ]
+    assert Const.playback_status?(status) in [
+      :PLAY,
+      :PAUSE,
+      :STOP,
+    ]
   end
 
   test "ipc codec" do

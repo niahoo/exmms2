@@ -2,6 +2,7 @@ defmodule Exmms2.Client do
   require Logger
   use GenServer
   alias Exmms2.IPC
+  alias Exmms2.IPC.Codec
   alias Exmms2.IPC.Cookie
   alias Exmms2.IPC.Message
   alias Exmms2.IPC.Reply
@@ -18,6 +19,22 @@ defmodule Exmms2.Client do
 
   def ping(ref) do
     GenServer.call(via(ref), :ping)
+  end
+
+  def call(ref, msg = %Message{}, timeout \\ :infinity) do
+    cookie = Cookie.next()
+    msg = Message.set_cookie(msg, cookie)
+    Logger.debug("Sending IPC message #{inspect msg}")
+    binary_msg = Message.encode(msg)
+    with {:ok, binary_reply} <- GenServer.call(via(ref), {:binary_call, binary_msg}, timeout),
+         {:ok, reply} <- Reply.decode(binary_reply)
+      do
+        Logger.debug("Received IPC reply #{inspect reply}")
+        case reply.status do
+          :ok -> {:ok, reply}
+          :error -> {:error, reply}
+        end
+    end
   end
 
   # -- Server side ------------------------------------------------------------
@@ -39,14 +56,53 @@ defmodule Exmms2.Client do
     {:reply, :pong, state}
   end
 
+  def handle_call({:binary_call, msg}, _from, state) do
+    sock = state.sock
+    log_message(msg)
+    :ok = SStream.send(sock, msg)
+    {:reply, recv(sock), state}
+  end
+
+  @default_timeout 1_000
+
+  defp recv(sock) do
+    case SStream.recv(sock, timeout: @default_timeout) do
+      {:error, :timeout} ->
+        Logger.warn """
+          IPC receive seems slow, #{@default_timeout / 1000} seconds elapsed
+        """
+        recv(sock) # loop because we want the answer
+      {:ok, reply} ->
+        log_reply(reply)
+        {:ok, reply}
+      {:error, err} ->
+        {:error, err}
+    end
+  end
+
+  defp log_message(bin) when is_binary(bin) do
+    Logger.debug("Outgoing IPC message\n#{Codec.to_hex bin}")
+    bin
+  end
+  defp log_reply(bin = <<_ :: 32, 1 :: 32, _ :: binary>>)do
+    Logger.error("Incoming IPC reply ERROR\n#{Codec.to_hex bin}")
+    bin
+  end
+  defp log_reply(bin) when is_binary(bin) do
+    Logger.debug("Incoming IPC reply\n#{Codec.to_hex bin}")
+    bin
+  end
+
   defp connect_hello(sock) do
     cookie = Cookie.next()
     msg =
       Message.Main.hello!(IPC.protocol_version, "exmms2_conn")
       |> Message.set_cookie(cookie)
-      |> Message.encode
-    SStream.send!(sock, msg <> "\n")
+      |> Message.encode()
+      |> log_message
+    SStream.send!(sock, msg)
     SStream.recv!(sock)
+    |> log_reply
     |> Reply.decode!
     |> case do
         %Reply{status: :ok, payload: client_id, cookie: ^cookie}

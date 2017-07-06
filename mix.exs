@@ -39,7 +39,7 @@ defmodule Exmms2.Mixfile do
 
   defp aliases do
     [
-      genipc: "run priv/genipc/genipc.exs"
+      genipc: ["clean", "run priv/genipc/genipc.exs"]
     ]
   end
 end

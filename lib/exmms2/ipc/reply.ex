@@ -12,4 +12,8 @@ defmodule Exmms2.IPC.Reply do
     reply
   end
 
+  def decode(bin) do
+    Exmms2.IPC.Codec.decode_reply(bin)
+  end
+
 end
