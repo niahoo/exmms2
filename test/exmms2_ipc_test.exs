@@ -34,9 +34,9 @@ defmodule Exmms2IPCTest do
     comp =
       term
       |> Exmms2.IPC.Codec.encode
-      |> IO.inspect
+      # |> IO.inspect
       |> Exmms2.IPC.Codec.decode!
-      |> IO.inspect
+      # |> IO.inspect
     assert ^term = comp
   end
 end
