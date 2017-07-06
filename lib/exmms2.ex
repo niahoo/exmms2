@@ -1,18 +1,8 @@
 defmodule Exmms2 do
-  @moduledoc """
-  Documentation for Exmms2.
-  """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Exmms2.hello
-      :world
-
-  """
-  def hello do
-    :world
+  def connect(ref \\ make_ref(), tcp_uri) do
+    {:ok, _pid} = Supervisor.start_child(Exmms2.Conn.Supervisor, [ref, tcp_uri])
+    ref
   end
+
 end

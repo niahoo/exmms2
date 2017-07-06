@@ -33,6 +33,7 @@ defmodule Exmms2.Mixfile do
   defp deps do
     [
       {:decompilerl, github: "niahoo/decompilerl"},
+      {:socket, "~> 0.3.12"},
     ]
   end
 

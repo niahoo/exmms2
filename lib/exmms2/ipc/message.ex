@@ -9,7 +9,7 @@ defmodule Exmms2.IPC.Message do
   ]
 
   def encode(msg = %@msg{}),
-    do: Exmms2.IPC.Encoder.encode(msg)
+    do: Exmms2.IPC.Codec.encode(msg)
 
   def set_cookie(msg = %@msg{}, cookie) when is_integer(cookie),
     do: %@msg{msg | cookie: cookie}

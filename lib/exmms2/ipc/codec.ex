@@ -1,4 +1,4 @@
-defmodule Exmms2.IPC.Encoder.Helper do
+defmodule Exmms2.IPC.Codec.Helper do
   def int32(int) when is_integer(int) do
     <<int :: 32>>
   end
@@ -8,9 +8,11 @@ defmodule Exmms2.IPC.Encoder.Helper do
   end
 end
 
-defmodule Exmms2.IPC.Encoder do
-  alias Exmms2.IPC.Message, as: Msg
-  import Exmms2.IPC.Encoder.Helper
+defmodule Exmms2.IPC.Codec do
+  alias Exmms2.IPC.Message
+  alias Exmms2.IPC.Reply
+  alias Exmms2.IPC.Const
+  import Exmms2.IPC.Codec.Helper
 
   @value_type_none       int32(0x00)
   @value_type_error      int32(0x01)
@@ -21,7 +23,7 @@ defmodule Exmms2.IPC.Encoder do
   @value_type_list       int32(0x06)
   @value_type_dictionary int32(0x07)
 
-  def encode(msg = %Msg{}) do
+  def encode(msg = %Message{}) do
     object_id = int32(msg.object_id)
     command_id = int32(msg.command_id)
     cookie = int32(msg.cookie)
@@ -62,6 +64,34 @@ defmodule Exmms2.IPC.Encoder do
 
   defp join_binaries(bins) do
     Enum.join(bins)
+  end
+
+  def decode_reply(bin) when is_binary(bin) do
+    IO.inspect bin
+    case bin do
+      <<object_id :: 32, status_code :: 32, cookie :: 32, payload_length :: 32, bin_payload :: binary >>
+      when byte_size(bin_payload) === payload_length ->
+        payload = decode_payload(bin_payload, payload_length)
+        status =
+          cond do
+            status_code == Const.ipc_command_special(:REPLY) -> :ok
+            status_code == Const.ipc_command_special(:ERROR) -> :error
+            true -> :unknown
+          end
+        reply = %Reply{
+          object_id: object_id,
+          status: status,
+          cookie: cookie,
+          payload: payload
+        }
+        {:ok, reply}
+      _otherwise ->
+        {:error, {:bad_reply, bin}}
+    end
+  end
+
+  def decode_payload(bin, len) do
+    "This iz my payload"
   end
 
   def to_hex(bin) when is_binary(bin) do

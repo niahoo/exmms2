@@ -34,6 +34,18 @@ class IpcFoo:
 	def __init__(self, xml_element):
 		self.version = int(xml_element.getAttribute('version'))
 		self.objects = []
+		self.constants = {}
+		self.enums = {}
+
+		constant_elements = xml_element.getElementsByTagName('constant')
+		for constant_element in constant_elements:
+			constant = IpcConstant(constant_element)
+			self.constants[constant.name] = constant
+
+		enum_elements = xml_element.getElementsByTagName('enum')
+		for enum_element in enum_elements:
+			enum = IpcEnum(enum_element, self.constants)
+			self.enums[enum.name] = enum
 
 		object_elements = xml_element.getElementsByTagName('object')
 		object_id = 1 # ID 0 is reserved for signal voodoo
@@ -45,6 +57,37 @@ class IpcFoo:
 			object_id += 1
 
 			self.objects.append(object)
+
+class IpcEnum(NamedElement):
+	def __init__(self, xml_element, constants):
+		NamedElement.__init__(self, xml_element)
+
+		member_elements = xml_element.getElementsByTagName('member')
+		members = {}
+
+		current_value = 0
+		for member_element in member_elements:
+			name = member_element.firstChild.data.strip()
+			ref_val = member_element.getAttribute('ref-value')
+			ref_type = member_element.getAttribute('ref-type')
+			if ref_type == 'constant' and ref_val != '':
+				current_value = constants[ref_val].value
+			elif ref_val != '':
+				current_value = members[ref_val]
+			members[name] = current_value
+			current_value += 1
+		self.members = members
+
+class IpcConstant(NamedElement):
+	def __init__(self, xml_element):
+		NamedElement.__init__(self, xml_element)
+		value_element = xml_element.getElementsByTagName('value')[0]
+		val_type = value_element.getAttribute('type')
+		raw_value = value_element.firstChild.data.strip()
+		if val_type == 'integer':
+			self.value = int(raw_value)
+		else:
+			self.value = raw_value
 
 class IpcObject(NamedElement):
 	def __init__(self, xml_element):
