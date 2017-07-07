@@ -55,12 +55,12 @@ defmodule Exmms2.IPC.Compiler do
           ({name, :list, type}) ->
             arg = Macro.var(name, __MODULE__)
             quote do
-              Exmms2.IPC.validate_list!(unquote(arg), unquote(type))
+              unquote(arg) = Exmms2.IPC.coerce_list!(unquote(arg), unquote(type))
             end
           ({name, :dictionary, type}) ->
             arg = Macro.var(name, __MODULE__)
             quote do
-              Exmms2.IPC.validate_dictionary!(unquote(arg), unquote(type))
+              unquote(arg) = Exmms2.IPC.coerce_dictionary!(unquote(arg), unquote(type))
             end
       end)
     payload =
@@ -124,7 +124,8 @@ defmodule Exmms2.IPC.Compiler do
 
   def create_client_function(info) do
     %{doc: doc, args: args, command_id: command_id, name: name,
-      object_id: object_id, signal: is_signal, module: module} = info
+      object_id: object_id, signal: is_signal, module: module,
+      return: return_type} = info
     args_names = get_args_names(args)
     args_vars =
       args_names
@@ -142,13 +143,13 @@ defmodule Exmms2.IPC.Compiler do
         # message for this function.
         # Client.Main.hello(arg1, arg2) sends IPC.Message.Main.hello(arg1, arg2)
         with {:ok, message} <- unquote(message_module).unquote(name)(unquote_splicing(args_vars)),
-             {:ok, reply = %Exmms2.IPC.Reply{status: :ok, payload: p}} <- Exmms2.Client.call(conn, message)
+             {:ok, reply = %Exmms2.IPC.Reply{status: :ok, payload: p}} <- Exmms2.Client.call(conn, message),
+             payload = Exmms2.IPC.transform_payload(p, unquote(return_type))
           do
-            {:ok, p}
+            {:ok, payload}
           else
-             {:error, reply = %Exmms2.IPC.Reply{status: :error, payload: p}} ->
+            {:error, reply = %Exmms2.IPC.Reply{status: :error, payload: p}} ->
               {:error, err} = p
-              p
         end
       end
     end

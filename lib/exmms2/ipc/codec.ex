@@ -74,6 +74,9 @@ defmodule Exmms2.IPC.Codec do
     Enum.join(bins)
   end
 
+@reply_ok_code Const.code(:ipc_command_special, :REPLY)
+@reply_error_code Const.code(:ipc_command_special, :ERROR)
+
   def decode_reply(bin) when is_binary(bin) do
     with {:a, <<oid :: 32, sc :: 32, ck :: 32, pl :: 32, bp :: binary >>} <- {:a, bin},
          object_id = oid, status_code = sc, cookie = ck, payload_length = pl,
@@ -82,10 +85,10 @@ defmodule Exmms2.IPC.Codec do
          {:c, << bin_payload :: binary-size(payload_length) >>} <- {:c, bin_payload},
          {:ok, payload} <- decode(bin_payload) do
           status =
-            cond do
-              status_code == Const.ipc_command_special(:REPLY) -> :ok
-              status_code == Const.ipc_command_special(:ERROR) -> :error
-              true -> :unknown
+            case status_code do
+              @reply_ok_code -> :ok
+              @reply_error_code -> :error
+              _ -> :unknown
             end
           reply = %Reply{
             object_id: object_id,

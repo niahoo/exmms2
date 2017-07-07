@@ -1,6 +1,7 @@
 defmodule Exmms2.IPC do
   require Logger
   alias Exmms2.IPC.Compiler
+  alias Exmms2.IPC.Const
 
   def protocol_version() do
     unquote(Compiler.ipc().version)
@@ -39,9 +40,19 @@ defmodule Exmms2.IPC do
     do: is_binary(s)
 
   def validate_value(_, other) do
-    Logger.warn("Unknown IPC value type #{inspect other}")
+    Logger.warn("Unknown IPC value validated type #{inspect other}")
     true
   end
+
+  def transform_payload(p, {:'enum-value', enum_name}) do
+    Const.key(enum_name, p)
+  end
+
+  def transform_payload(p, other) do
+    Logger.warn("Unknown IPC value transform type #{inspect other}")
+    p
+  end
+
 
 end
 

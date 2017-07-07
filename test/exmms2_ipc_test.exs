@@ -16,11 +16,11 @@ defmodule Exmms2IPCTest do
   end
 
   test "ipc enums" do
-    assert IPC.Const.ipc_command_special(:REPLY) === 0
-    assert IPC.Const.ipc_command_special(:ERROR) === 1
-    assert IPC.Const.collection_type(:LAST) === IPC.Const.collection_type(:IDLIST)
-    assert IPC.Const.ipc_command_signal(:SIGNAL) === 32
-    assert IPC.Const.ipc_command_signal(:BROADCAST) === 33
+    assert IPC.Const.code(:ipc_command_special, :REPLY) === 0
+    assert IPC.Const.code(:ipc_command_special, :ERROR) === 1
+    assert IPC.Const.code(:collection_type, :LAST) === IPC.Const.code(:collection_type, :IDLIST)
+    assert IPC.Const.code(:ipc_command_signal, :SIGNAL) === 32
+    assert IPC.Const.code(:ipc_command_signal, :BROADCAST) === 33
   end
 
   test "ipc connection" do
@@ -29,14 +29,14 @@ defmodule Exmms2IPCTest do
     {:ok, status} =
       Exmms2.Client.Playback.status(conn)
     assert status in [
-      Const.playback_status(:PLAY),
-      Const.playback_status(:PAUSE),
-      Const.playback_status(:STOP),
-    ]
-    assert Const.playback_status?(status) in [
       :PLAY,
       :PAUSE,
       :STOP,
+    ]
+    assert Const.code(:playback_status, status) in [
+      Const.code(:playback_status, :PLAY),
+      Const.code(:playback_status, :PAUSE),
+      Const.code(:playback_status, :STOP),
     ]
   end
 
