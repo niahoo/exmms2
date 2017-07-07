@@ -11,7 +11,4 @@ priv = Path.join([__DIR__, "priv", "genipc"])
 datafile = Path.join(priv, "ipc.exs")
 File.write!(datafile, data)
 IO.puts "\nWrote IPC API data in #{datafile}\nsuccess"
-Mix.start
-Mix.CLI.main
-Mix.Task.run("compile", ["--force"])
 System.halt
