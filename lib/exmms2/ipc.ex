@@ -23,9 +23,9 @@ defmodule Exmms2.IPC do
     end
   end
 
-  def validate_value!(value, type) do
+  def coerce_value!(value, type) do
     if validate_value(value, type) do
-      :ok
+      value
     else
       raise ValidationException, type: type, value: value
     end

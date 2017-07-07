@@ -50,7 +50,7 @@ defmodule Exmms2.IPC.Compiler do
           ({name, type}) ->
             arg = Macro.var(name, __MODULE__)
             quote do
-              Exmms2.IPC.validate_value!(unquote(arg), unquote(type))
+              unquote(arg) = Exmms2.IPC.coerce_value!(unquote(arg), unquote(type))
             end
           ({name, :list, type}) ->
             arg = Macro.var(name, __MODULE__)

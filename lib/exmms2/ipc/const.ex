@@ -16,6 +16,10 @@ defmodule Exmms2.IPC.Const do
             unquote(val)
           end
          end)
+      # catchall
+      def unquote(name)(_) do
+        :error
+      end
      end)
 
   # Create the reversed functions that have an extra '?' in the name and
@@ -35,5 +39,9 @@ defmodule Exmms2.IPC.Const do
             unquote(const)
           end
          end)
+      # catchall
+      def unquote(qmark_name)(_) do
+        :error
+      end
      end)
 end
