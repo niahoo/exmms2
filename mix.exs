@@ -34,6 +34,7 @@ defmodule Exmms2.Mixfile do
     [
       {:decompilerl, github: "niahoo/decompilerl"},
       {:socket, "~> 0.3.12"},
+      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
     ]
   end
 
