@@ -39,7 +39,14 @@ defmodule Exmms2.Mixfile do
 
   defp aliases do
     [
-      genipc: ["clean", "run priv/genipc/genipc.exs"]
+      genipc: &genipc/1,
     ]
+  end
+
+  defp genipc(_) do
+    # this does not work. We should use a shell script like in npm scripts
+    Mix.Task.run("clean") # no work
+    Mix.Task.run("run", ["priv/genipc/genipc.exs"])
+    Mix.Task.run("compile", ["--force"]) # task already done ...
   end
 end

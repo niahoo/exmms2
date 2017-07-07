@@ -1,12 +1,23 @@
 #!/usr/bin/env python
 
 import sys
+import types
 
 import genipc
 from indenter import Indenter
 
 def camel_case(s):
     return ''.join(x.capitalize() for x in s.split('_'))
+
+def elixir_val_type_to_string(term):
+    if isinstance(term, genipc.TypedElement):
+        return elixir_val_type_to_string(term.type[0])
+    elif None == term:
+        return "nil"
+    elif isinstance(term, types.TupleType):
+        return "{:'%s', :'%s'}" % term
+    else:
+        return ":'%s'" % term
 
 def build(ipc):
     Indenter.printline('''\
@@ -57,19 +68,19 @@ def emit_method_code(object, method, name_prefix):
     Indenter.printline('name: :%s,' % method_name)
     Indenter.printline('doc: "%s",' % method.documentation)
     Indenter.printline('module: "%s",' % camel_case(object.name))
-
+    Indenter.printline('return: %s,' % elixir_val_type_to_string(method.return_value))
     arguments = getattr(method, "arguments", [])
 
     Indenter.enter('args: [')
 
 
     for a in arguments:
-        toptype = a.type[0].replace('enum-value', 'enum_value')
+        toptype = elixir_val_type_to_string(a.type[0])
         if len(a.type) > 1 and a.type[1] != "unknown":
-            subtype = a.type[1]
-            Indenter.printline('{:%s, :%s, :%s},'  % (a.name, toptype, subtype))
+            subtype = elixir_val_type_to_string(a.type[1])
+            Indenter.printline('{:%s, %s, %s},'  % (a.name, toptype, subtype))
         else:
-            Indenter.printline('{:%s, :%s},'  % (a.name, toptype))
+            Indenter.printline('{:%s, %s},'  % (a.name, toptype))
     Indenter.leave('],')
 
 

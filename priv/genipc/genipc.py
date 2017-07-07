@@ -24,7 +24,11 @@ class TypedElement:
 		node = choices[0]
 
 		while node:
-			self.type.append(node.nodeName)
+			if node.nodeName == 'enum-value':
+				enum = node.getAttribute('name')
+				self.type.append(('enum-value', enum))
+			else:
+				self.type.append(node.nodeName)
 
 			choices = [e for e in node.childNodes
 			           if e.nodeType == e.ELEMENT_NODE]
