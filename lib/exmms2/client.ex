@@ -84,8 +84,13 @@ defmodule Exmms2.Client do
     Logger.debug("Outgoing IPC message\n#{Codec.to_hex bin}")
     bin
   end
-  defp log_reply(bin = <<_ :: 32, 1 :: 32, _ :: binary>>)do
-    Logger.error("Incoming IPC reply ERROR\n#{Codec.to_hex bin}")
+  defp log_reply(bin = <<_ :: 32, 1 :: 32, _ :: binary>>) do
+    case Reply.decode(bin) do
+      {:ok, %Reply{payload: {:error, err}}} ->
+        Logger.error("Incoming IPC reply ERROR\n#{err}")
+      _otherwise ->
+        Logger.error("Incoming IPC reply ERROR\n#{Codec.to_hex bin}")
+    end
     bin
   end
   defp log_reply(bin) when is_binary(bin) do

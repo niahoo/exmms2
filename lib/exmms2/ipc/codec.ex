@@ -33,7 +33,10 @@ defmodule Exmms2.IPC.Codec do
       case msg.payload do
         [] when not @send_empty_payload -> {"", int32(0)}
         list ->
-          payload = encode(list)
+          payload =  encode(list)
+            # list
+            # |> Enum.map(&encode/1)
+            # |> join_binaries
           plen =
             payload
             |> byte_size()
