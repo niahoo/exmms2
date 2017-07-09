@@ -4,8 +4,8 @@ defmodule Exmms2IPCTest do
   alias Exmms2.IPC
   alias Exmms2.IPC.Const
 
-  @test_url System.get_env("XMMS_PATH")
   @test_url "tcp://192.168.1.100:5555"
+  @test_url System.get_env("XMMS_PATH")
 
   test "ipc parser" do
     assert IPC.protocol_version === 24

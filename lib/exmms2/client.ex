@@ -81,27 +81,35 @@ defmodule Exmms2.Client do
   end
 
   defp log_message(bin) when is_binary(bin) do
-    Logger.debug("Outgoing IPC message\n#{Codec.to_hex bin}")
+    Logger.debug(
+      "Outgoing IPC message\n" <>
+      "Object id    Command      Cookie       Payload len\n" <>
+      "#{Codec.to_hex bin}"
+    )
     bin
   end
   defp log_reply(bin = <<_ :: 32, 1 :: 32, _ :: binary>>) do
     case Reply.decode(bin) do
-      {:ok, %Reply{payload: {:error, err}}} ->
-        Logger.error("Incoming IPC reply ERROR\n#{err}")
+      {:ok, %Reply{payload: {:error, err}, cookie: cookie}} ->
+        Logger.error("Incoming IPC reply (cookie: #{cookie}) ERROR\n#{err}")
       _otherwise ->
         Logger.error("Incoming IPC reply ERROR\n#{Codec.to_hex bin}")
     end
     bin
   end
   defp log_reply(bin) when is_binary(bin) do
-    Logger.debug("Incoming IPC reply\n#{Codec.to_hex bin}")
+    Logger.debug(
+      "Incoming IPC reply\n" <>
+      "Object id    Status       Cookie       Payload len\n" <>
+      "#{Codec.to_hex bin}"
+    )
     bin
   end
 
   defp connect_hello(sock) do
     cookie = Cookie.next()
     msg =
-      Message.Main.hello!(IPC.protocol_version, "exmms2_conn")
+      Message.Main.hello!(IPC.protocol_version, "Exmms2")
       |> Message.set_cookie(cookie)
       |> Message.encode()
       |> log_message
